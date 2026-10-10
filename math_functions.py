@@ -1,18 +1,22 @@
 import math
 
+
 def sin(x):
-    return math.sin(math.radians(x))
+    return math.sin(x)
 
 def cos(x):
-    return math.cos(math.radians(x))
+    return math.cos(x)
 
 def square_root(x):
     if x < 0:
-        raise ValueError("Корень из отрицательного числа")
+        raise ValueError(
+            "Нельзя извлечь корень из отрицательного числа"
+        )
     return math.sqrt(x)
 
 def floor(x):
     return math.floor(x)
+
 
 def ceil(x):
     return math.ceil(x)
