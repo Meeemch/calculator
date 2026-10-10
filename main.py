@@ -33,12 +33,12 @@ class Calculator:
         buttons = [
             ["", "", "", ""],
             ["sin", "cos", "√", "floor"],
-            ["ceil", "%", "^", ""],
+            ["ceil", "%", "^", "C"],
             ["7", "8", "9", "÷"],
             ["4", "5", "6", "×"],
             ["1", "2", "3", "−"],
             ["±", "0", ".", "+"],
-            ["", "", "", ""]
+            ["⌫", "=", "", ""]
         ]
 
         for row_index, row in enumerate(buttons, start=1):
@@ -97,6 +97,10 @@ class Calculator:
             self.unary_operation(value)
         elif value == "±":
             self.change_sign()
+        elif value == "C":
+            self.clear()
+        elif value == "⌫":
+            self.delete_last()
 
     def get_number(self):
         return float(self.display_value.get())
@@ -178,6 +182,25 @@ class Calculator:
     def change_sign(self):
         self.show_result(-self.get_number())
         self.new_input = False
+
+    def clear(self):
+        self.display_value.set("0")
+        self.first_operand = None
+        self.pending_operator = None
+        self.new_input = True
+
+    def delete_last(self):
+        if self.new_input:
+            return
+
+        current = self.display_value.get()
+
+        if len(current) <= 1 or (
+            len(current) == 2 and current.startswith("-")
+        ):
+            self.display_value.set("0")
+        else:
+            self.display_value.set(current[:-1])
 
 if __name__ == "__main__":
     root = tk.Tk()
