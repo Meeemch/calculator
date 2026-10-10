@@ -31,7 +31,7 @@ class Calculator:
         )
 
         buttons = [
-            ["", "", "", ""],
+            ["MC", "MR", "M+", "M-"],
             ["sin", "cos", "√", "floor"],
             ["ceil", "%", "^", "C"],
             ["7", "8", "9", "÷"],
@@ -101,6 +101,8 @@ class Calculator:
             self.clear()
         elif value == "⌫":
             self.delete_last()
+        elif value in ("MC", "MR", "M+", "M-"):
+            self.memory_operation(value)
 
     def get_number(self):
         return float(self.display_value.get())
@@ -201,6 +203,19 @@ class Calculator:
             self.display_value.set("0")
         else:
             self.display_value.set(current[:-1])
+
+    def memory_operation(self, operation):
+        number = self.get_number()
+
+        if operation == "MC":
+            self.memory = 0
+        elif operation == "MR":
+            self.show_result(self.memory)
+            self.new_input = True
+        elif operation == "M+":
+            self.memory += number
+        elif operation == "M-":
+            self.memory -= number
 
 if __name__ == "__main__":
     root = tk.Tk()
