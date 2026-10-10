@@ -13,3 +13,10 @@ def square_root(x):
             "Нельзя извлечь корень из отрицательного числа"
         )
     return math.sqrt(x)
+
+def floor(x):
+    return math.floor(x)
+
+
+def ceil(x):
+    return math.ceil(x)
