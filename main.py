@@ -1,5 +1,6 @@
 import tkinter as tk
 import arithmetic
+import math_functions
 
 class Calculator:
     def __init__(self, root):
@@ -31,12 +32,12 @@ class Calculator:
 
         buttons = [
             ["", "", "", ""],
-            ["", "", "", ""],
-            ["", "", "", ""],
+            ["sin", "cos", "√", "floor"],
+            ["ceil", "%", "^", ""],
             ["7", "8", "9", "÷"],
             ["4", "5", "6", "×"],
             ["1", "2", "3", "−"],
-            ["", "0", ".", "+"],
+            ["±", "0", ".", "+"],
             ["", "", "", ""]
         ]
 
@@ -92,6 +93,10 @@ class Calculator:
             self.set_operator(value)
         elif value == "=":
             self.equals()
+        elif value in ("sin", "cos", "√", "floor", "ceil"):
+            self.unary_operation(value)
+        elif value == "±":
+            self.change_sign()
 
     def get_number(self):
         return float(self.display_value.get())
@@ -154,6 +159,25 @@ class Calculator:
         self.first_operand = None
         self.pending_operator = None
         self.new_input = True
+
+    def unary_operation(self, operation):
+        number = self.get_number()
+
+        operations = {
+            "sin": math_functions.sin,
+            "cos": math_functions.cos,
+            "√": math_functions.square_root,
+            "floor": math_functions.floor,
+            "ceil": math_functions.ceil
+        }
+
+        result = operations[operation](number)
+        self.show_result(result)
+        self.new_input = True
+
+    def change_sign(self):
+        self.show_result(-self.get_number())
+        self.new_input = False
 
 if __name__ == "__main__":
     root = tk.Tk()
