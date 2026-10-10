@@ -85,24 +85,29 @@ class Calculator:
             self.display_value.set(current + ".")
 
     def on_button_click(self, value):
-        if value.isdigit():
-            self.input_digit(value)
-        elif value == ".":
-            self.input_decimal()
-        elif value in ("+", "−", "×", "÷", "%", "^"):
-            self.set_operator(value)
-        elif value == "=":
-            self.equals()
-        elif value in ("sin", "cos", "√", "floor", "ceil"):
-            self.unary_operation(value)
-        elif value == "±":
-            self.change_sign()
-        elif value == "C":
+        try:
+            if value.isdigit():
+                self.input_digit(value)
+            elif value == ".":
+                self.input_decimal()
+            elif value in ("+", "−", "×", "÷", "%", "^"):
+                self.set_operator(value)
+            elif value == "=":
+                self.equals()
+            elif value == "C":
+                self.clear()
+            elif value == "⌫":
+                self.delete_last()
+            elif value == "±":
+                self.change_sign()
+            elif value in ("sin", "cos", "√", "floor", "ceil"):
+                self.unary_operation(value)
+            elif value in ("MC", "MR", "M+", "M-"):
+                self.memory_operation(value)
+        except (ValueError, ZeroDivisionError, OverflowError) as error:
+            from tkinter import messagebox
+            messagebox.showerror("Ошибка", str(error))
             self.clear()
-        elif value == "⌫":
-            self.delete_last()
-        elif value in ("MC", "MR", "M+", "M-"):
-            self.memory_operation(value)
 
     def get_number(self):
         return float(self.display_value.get())
