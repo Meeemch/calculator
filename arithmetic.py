@@ -9,18 +9,13 @@ def multiply(a, b):
 
 def divide(a, b):
     if b == 0:
-        raise ValueError("Деление на ноль невозможно")
+        raise ZeroDivisionError("Деление на ноль")
     return a / b
 
 def modulo(a, b):
     if b == 0:
-        raise ValueError("Деление на ноль невозможно")
+        raise ZeroDivisionError("Деление на ноль")
     return a % b
 
 def power(a, b):
-    result = a ** b
-
-    if isinstance(result, complex):
-        raise ValueError("Результат не является действительным числом")
-
-    return result
+    return a ** b
