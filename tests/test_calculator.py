@@ -1,168 +1,156 @@
-import pytest
 import tkinter as tk
+import unittest
 
 from main import Calculator
 
 
-@pytest.fixture
-def calculator():
-    root = tk.Tk()
-    root.withdraw()
+class TestCalculator(unittest.TestCase):
 
-    calc = Calculator(root)
+    def setUp(self):
+        self.root = tk.Tk()
+        self.root.withdraw()
 
-    yield calc
+        self.calculator = Calculator(self.root)
 
-    root.destroy()
+    def tearDown(self):
+        self.root.destroy()
 
+    def test_input_digit(self):
+        self.calculator.input_digit("5")
 
-def test_input_digit(calculator):
-    calculator.input_digit("5")
+        self.assertEqual(self.calculator.display_value.get(), "5")
 
-    assert calculator.display_value.get() == "5"
+    def test_input_multiple_digits(self):
+        self.calculator.input_digit("1")
+        self.calculator.input_digit("2")
+        self.calculator.input_digit("3")
 
+        self.assertEqual(self.calculator.display_value.get(), "123")
 
-def test_input_multiple_digits(calculator):
-    calculator.input_digit("1")
-    calculator.input_digit("2")
-    calculator.input_digit("3")
+    def test_input_decimal(self):
+        self.calculator.input_decimal()
 
-    assert calculator.display_value.get() == "123"
+        self.assertEqual(self.calculator.display_value.get(), "0.")
 
+    def test_clear(self):
+        self.calculator.display_value.set("123")
+        self.calculator.first_operand = 10
+        self.calculator.pending_operator = "+"
 
-def test_input_decimal(calculator):
-    calculator.input_decimal()
+        self.calculator.clear()
 
-    assert calculator.display_value.get() == "0."
+        self.assertEqual(self.calculator.display_value.get(), "0")
+        self.assertIsNone(self.calculator.first_operand)
+        self.assertIsNone(self.calculator.pending_operator)
+        self.assertIs(self.calculator.new_input, True)
 
+    def test_delete_last(self):
+        self.calculator.display_value.set("123")
+        self.calculator.new_input = False
 
-def test_clear(calculator):
-    calculator.display_value.set("123")
-    calculator.first_operand = 10
-    calculator.pending_operator = "+"
+        self.calculator.delete_last()
 
-    calculator.clear()
+        self.assertEqual(self.calculator.display_value.get(), "12")
 
-    assert calculator.display_value.get() == "0"
-    assert calculator.first_operand is None
-    assert calculator.pending_operator is None
-    assert calculator.new_input is True
+    def test_change_sign(self):
+        self.calculator.display_value.set("5")
 
+        self.calculator.change_sign()
 
-def test_delete_last(calculator):
-    calculator.display_value.set("123")
-    calculator.new_input = False
+        self.assertEqual(self.calculator.display_value.get(), "-5")
 
-    calculator.delete_last()
+    def test_addition(self):
+        self.calculator.display_value.set("2")
+        self.calculator.set_operator("+")
 
-    assert calculator.display_value.get() == "12"
+        self.calculator.display_value.set("3")
+        self.calculator.new_input = False
 
+        self.calculator.equals()
 
-def test_change_sign(calculator):
-    calculator.display_value.set("5")
+        self.assertEqual(self.calculator.display_value.get(), "5")
 
-    calculator.change_sign()
+    def test_subtraction(self):
+        self.calculator.display_value.set("8")
+        self.calculator.set_operator("−")
 
-    assert calculator.display_value.get() == "-5"
+        self.calculator.display_value.set("3")
+        self.calculator.new_input = False
 
+        self.calculator.equals()
 
-def test_addition(calculator):
-    calculator.display_value.set("2")
-    calculator.set_operator("+")
+        self.assertEqual(self.calculator.display_value.get(), "5")
 
-    calculator.display_value.set("3")
-    calculator.new_input = False
+    def test_multiplication(self):
+        self.calculator.display_value.set("4")
+        self.calculator.set_operator("×")
 
-    calculator.equals()
+        self.calculator.display_value.set("5")
+        self.calculator.new_input = False
 
-    assert calculator.display_value.get() == "5"
+        self.calculator.equals()
 
+        self.assertEqual(self.calculator.display_value.get(), "20")
 
-def test_subtraction(calculator):
-    calculator.display_value.set("8")
-    calculator.set_operator("−")
+    def test_division(self):
+        self.calculator.display_value.set("10")
+        self.calculator.set_operator("÷")
 
-    calculator.display_value.set("3")
-    calculator.new_input = False
+        self.calculator.display_value.set("2")
+        self.calculator.new_input = False
 
-    calculator.equals()
+        self.calculator.equals()
 
-    assert calculator.display_value.get() == "5"
+        self.assertEqual(self.calculator.display_value.get(), "5")
 
+    def test_memory_operations(self):
+        self.calculator.display_value.set("10")
+        self.calculator.memory_operation("M+")
 
-def test_multiplication(calculator):
-    calculator.display_value.set("4")
-    calculator.set_operator("×")
+        self.assertEqual(self.calculator.memory, 10)
 
-    calculator.display_value.set("5")
-    calculator.new_input = False
+        self.calculator.display_value.set("3")
+        self.calculator.memory_operation("M-")
 
-    calculator.equals()
+        self.assertEqual(self.calculator.memory, 7)
 
-    assert calculator.display_value.get() == "20"
+        self.calculator.memory_operation("MC")
 
+        self.assertEqual(self.calculator.memory, 0)
 
-def test_division(calculator):
-    calculator.display_value.set("10")
-    calculator.set_operator("÷")
+    def test_memory_recall(self):
+        self.calculator.memory = 25
 
-    calculator.display_value.set("2")
-    calculator.new_input = False
+        self.calculator.memory_operation("MR")
 
-    calculator.equals()
+        self.assertEqual(self.calculator.display_value.get(), "25")
+        self.assertIs(self.calculator.new_input, True)
 
-    assert calculator.display_value.get() == "5"
+    def test_unary_square_root(self):
+        self.calculator.display_value.set("9")
 
+        self.calculator.unary_operation("√")
 
-def test_memory_operations(calculator):
-    calculator.display_value.set("10")
-    calculator.memory_operation("M+")
+        self.assertEqual(self.calculator.display_value.get(), "3")
 
-    assert calculator.memory == 10
+    def test_unary_sin(self):
+        self.calculator.display_value.set("0")
 
-    calculator.display_value.set("3")
-    calculator.memory_operation("M-")
+        self.calculator.unary_operation("sin")
 
-    assert calculator.memory == 7
+        self.assertEqual(self.calculator.display_value.get(), "0")
 
-    calculator.memory_operation("MC")
+    def test_unary_negative_square_root(self):
+        self.calculator.display_value.set("-1")
 
-    assert calculator.memory == 0
+        with self.assertRaises(ValueError):
+            self.calculator.unary_operation("√")
 
+    def test_format_number(self):
+        self.assertEqual(self.calculator.format_number(5.0), "5")
+        self.assertEqual(self.calculator.format_number(0), "0")
+        self.assertEqual(self.calculator.format_number(2.5), "2.5")
 
-def test_memory_recall(calculator):
-    calculator.memory = 25
 
-    calculator.memory_operation("MR")
-
-    assert calculator.display_value.get() == "25"
-    assert calculator.new_input is True
-
-
-def test_unary_square_root(calculator):
-    calculator.display_value.set("9")
-
-    calculator.unary_operation("√")
-
-    assert calculator.display_value.get() == "3"
-
-
-def test_unary_sin(calculator):
-    calculator.display_value.set("0")
-
-    calculator.unary_operation("sin")
-
-    assert calculator.display_value.get() == "0"
-
-
-def test_unary_negative_square_root(calculator):
-    calculator.display_value.set("-1")
-
-    with pytest.raises(ValueError):
-        calculator.unary_operation("√")
-
-
-def test_format_number(calculator):
-    assert calculator.format_number(5.0) == "5"
-    assert calculator.format_number(0) == "0"
-    assert calculator.format_number(2.5) == "2.5"
+if __name__ == "__main__":
+    unittest.main()
