@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Постинсталляционный скрипт (аналог секции %post в .spec).
+# $2 — путь установки (/Applications), $3 — целевой том.
+#
+info ()  { echo " info: $*"; }
+ok ()    { echo " done: $*"; }
+
+TARGET_VOL="${3:-/}"
+[ "$TARGET_VOL" = "/" ] && TARGET_VOL=""
+APP="$TARGET_VOL/Applications/PyCalculator.app"
+BIN_DIR="$TARGET_VOL/usr/local/bin"
+
+info "создание команды pycalculator"
+mkdir -p "$BIN_DIR"
+cat > "$BIN_DIR/pycalculator" <<WRAP
+#!/bin/bash
+exec "/Applications/PyCalculator.app/Contents/MacOS/PyCalculator" "\$@"
+WRAP
+chmod 755 "$BIN_DIR/pycalculator"
+ok "команда $BIN_DIR/pycalculator"
+
+chmod -R a+rX "$APP"
+ok "права на $APP"
+exit 0
