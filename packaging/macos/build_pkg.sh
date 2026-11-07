@@ -5,8 +5,9 @@
 # Использование:
 #   ./packaging/macos/build_pkg.sh [ВЕРСИЯ]
 #
-# Результат: dist/PyCalculator-<ВЕРСИЯ>.pkg
-# Пакет ставит /Applications/PyCalculator.app и команду /usr/local/bin/pycalculator.
+# Берёт скомпилированное приложение build/app/PyCalculator.app
+# (если его нет — сначала компилирует через build_app.sh)
+# и упаковывает в dist/PyCalculator-<ВЕРСИЯ>.pkg.
 #
 set -euo pipefail
 
@@ -14,11 +15,9 @@ set -euo pipefail
 ## Параметры пакета (аналог шапки .spec-файла)
 ##
 APP_NAME="PyCalculator"                     # имя .app
-DISPLAY_NAME="Калькулятор (Python)"         # имя, видимое пользователю
 IDENTIFIER="com.meeemch.pycalculator"       # идентификатор пакета
 VERSION="${1:-1.0}"                         # версия (параметр скрипта)
 INSTALL_LOCATION="/Applications"            # куда ставить
-APP_FILES="main.py arithmetic.py math_functions.py"   # исходники приложения
 
 info ()  { printf '\033[1m info: \033[0m %s\n' "$*"; }
 ok ()    { printf '\033[1m done: \033[0m \033[32m%s\033[0m\n' "$*"; }
@@ -29,66 +28,34 @@ PROJECT_DIR="$(cd "$HERE/../.." && pwd)"
 BUILD_DIR="$PROJECT_DIR/build/pkg"
 DIST_DIR="$PROJECT_DIR/dist"
 ROOT_DIR="$BUILD_DIR/root"
-APP_DIR="$ROOT_DIR/$APP_NAME.app"
+COMPILED_APP="$PROJECT_DIR/build/app/$APP_NAME.app"
 OUTPUT_PKG="$DIST_DIR/$APP_NAME-$VERSION.pkg"
 
 command -v pkgbuild    >/dev/null || error "pkgbuild не найден (нужен macOS + Xcode Command Line Tools)"
 command -v productbuild >/dev/null || error "productbuild не найден"
 
-info "Сборка $APP_NAME $VERSION"
+info "Сборка пакета $APP_NAME $VERSION"
+
+##
+## 1. Скомпилированное приложение
+##
+COMPILED_VERSION=""
+if [ -d "$COMPILED_APP" ]; then
+    COMPILED_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
+        "$COMPILED_APP/Contents/Info.plist" 2>/dev/null || true)"
+fi
+if [ "$COMPILED_VERSION" != "$VERSION" ]; then
+    info "нет скомпилированного приложения версии $VERSION — компилирую"
+    "$HERE/build_app.sh" "$VERSION" || error "компиляция не удалась"
+fi
+
 rm -rf "$BUILD_DIR"
-mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources/app" "$DIST_DIR"
-
-##
-## 1. Собираем .app-бандл
-##
-info "копирование исходников"
-for f in $APP_FILES; do
-    [ -f "$PROJECT_DIR/$f" ] || error "нет файла $f"
-    cp "$PROJECT_DIR/$f" "$APP_DIR/Contents/Resources/app/"
-done
-
-info "создание Info.plist"
-cat > "$APP_DIR/Contents/Info.plist" <<PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleName</key>               <string>$APP_NAME</string>
-    <key>CFBundleDisplayName</key>        <string>$DISPLAY_NAME</string>
-    <key>CFBundleIdentifier</key>         <string>$IDENTIFIER</string>
-    <key>CFBundleVersion</key>            <string>$VERSION</string>
-    <key>CFBundleShortVersionString</key> <string>$VERSION</string>
-    <key>CFBundleExecutable</key>         <string>$APP_NAME</string>
-    <key>CFBundlePackageType</key>        <string>APPL</string>
-    <key>LSMinimumSystemVersion</key>     <string>10.13</string>
-    <key>NSHighResolutionCapable</key>    <true/>
-</dict>
-</plist>
-PLIST
-
-info "создание запускающего скрипта"
-cat > "$APP_DIR/Contents/MacOS/$APP_NAME" <<'LAUNCHER'
-#!/bin/bash
-# Запуск калькулятора: ищем python3, в котором есть tkinter.
-APP_RES="$(cd "$(dirname "$0")/../Resources/app" && pwd)"
-for py in /opt/homebrew/bin/python3 /usr/local/bin/python3 \
-          /Library/Frameworks/Python.framework/Versions/Current/bin/python3 \
-          /usr/bin/python3; do
-    if [ -x "$py" ] && "$py" -c "import tkinter" >/dev/null 2>&1; then
-        cd "$APP_RES" && exec "$py" main.py "$@"
-    fi
-done
-osascript -e 'display alert "Калькулятор" message "Не найден Python 3 с модулем tkinter. Установите Python с python.org."' >/dev/null 2>&1
-echo "Не найден Python 3 с модулем tkinter" >&2
-exit 1
-LAUNCHER
-chmod 755 "$APP_DIR/Contents/MacOS/$APP_NAME"
-
-# убираем мусор и расширенные атрибуты, чтобы они не попали в пакет
-find "$ROOT_DIR" \( -name '__pycache__' -o -name '.DS_Store' \) -prune -exec rm -rf {} +
+mkdir -p "$ROOT_DIR" "$DIST_DIR"
+info "копирование $APP_NAME.app в корень пакета"
+cp -R "$COMPILED_APP" "$ROOT_DIR/"
+find "$ROOT_DIR" -name '.DS_Store' -delete
 xattr -cr "$ROOT_DIR" 2>/dev/null || true
-ok "бандл $APP_NAME.app собран"
+ok "приложение готово к упаковке"
 
 ##
 ## 2. Компонентный пакет (pkgbuild)

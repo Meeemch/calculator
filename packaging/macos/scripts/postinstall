@@ -13,9 +13,10 @@ BIN_DIR="$TARGET_VOL/usr/local/bin"
 
 info "создание команды pycalculator"
 mkdir -p "$BIN_DIR"
+EXE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Contents/Info.plist")"
 cat > "$BIN_DIR/pycalculator" <<WRAP
 #!/bin/bash
-exec "/Applications/PyCalculator.app/Contents/MacOS/PyCalculator" "\$@"
+exec "/Applications/PyCalculator.app/Contents/MacOS/$EXE" "\$@"
 WRAP
 chmod 755 "$BIN_DIR/pycalculator"
 ok "команда $BIN_DIR/pycalculator"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #   1. загрузка актуального состояния с сервера (git pull)
-#   2. сборка проекта и сборка unittest
+#   2. компиляция проекта (Nuitka) и сборка unittest
 #   3. выполнение unittest (pytest)
 #   4. создание установщика (.pkg, см. packaging/macos/build_pkg.sh)
 #   5. установка приложения (installer)
@@ -19,7 +19,7 @@ while getopts "b:v:sh" opt; do
         b) BRANCH="$OPTARG" ;;
         v) VERSION="$OPTARG" ;;
         s) SKIP_INSTALL=1 ;;
-        h) sed -n '2,19p' "$0"; exit 0 ;;
+        h) sed -n '2,6p' "$0"; echo '  параметры: -b ветка, -v версия, -s без установки'; exit 0 ;;
         *) error "неизвестный параметр, см. ./ci.sh -h" ;;
     esac
 done
@@ -65,10 +65,10 @@ info "установка зависимостей (requirements-dev.txt)"
 "$VENV/bin/python" -m pip install --quiet --upgrade pip >/dev/null 2>&1 || true
 "$VENV/bin/python" -m pip install --quiet -r requirements-dev.txt || error "pip install не удался"
 
-info "компиляция исходников проекта"
-"$VENV/bin/python" -m py_compile main.py arithmetic.py math_functions.py \
+info "компиляция приложения (Nuitka: Python -> C -> машинный код)"
+PYTHON_BUILD="$VENV/bin/python" "$PROJECT_DIR/packaging/macos/build_app.sh" "$VERSION" \
     || error "ошибка компиляции проекта"
-ok "проект собран"
+ok "проект скомпилирован: build/app/PyCalculator.app"
 
 info "компиляция и сборка unittest"
 "$VENV/bin/python" -m compileall -q tests || error "ошибка компиляции тестов"
