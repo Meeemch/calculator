@@ -23,7 +23,8 @@ class Calculator:
             font=("Arial", 25),
             justify="right",
             state="readonly",
-            readonlybackground="white"
+            readonlybackground="white",
+            foreground="black"
         )
         display.grid(
             row=0, column=0, columnspan=4,

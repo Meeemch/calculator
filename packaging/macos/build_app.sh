@@ -35,7 +35,7 @@ command -v clang >/dev/null || error "нет компилятора clang — в
 
 if ! "$PY" -m nuitka --version >/dev/null 2>&1; then
     info "установка компилятора Nuitka"
-    "$PY" -m pip install --quiet "nuitka>=2.0,<3" || error "не удалось установить Nuitka"
+    "$PY" -m pip install --quiet "nuitka>=4.2" || error "не удалось установить Nuitka"
 fi
 info "Nuitka $("$PY" -m nuitka --version 2>/dev/null | head -n 1)"
 
@@ -44,8 +44,7 @@ mkdir -p "$OUT_DIR" "$(dirname "$APP_OUT")"
 
 info "компиляция main.py -> C -> машинный код (первый раз — несколько минут)"
 "$PY" -m nuitka \
-    --standalone \
-    --macos-create-app-bundle \
+    --mode=app \
     --enable-plugin=tk-inter \
     --macos-app-name="$APP_NAME" \
     --macos-app-version="$VERSION" \
